@@ -93,7 +93,7 @@ struct ContentView: View {
                         Text(summary)
                         Text(scheduler.usingRealAlarms
                              ? "Using real system alarms (rings through silent mode)."
-                             : "Using time-sensitive notifications (fallback \u2014 real alarms not yet available on this device/account).")
+                             : "Using time-sensitive notifications (fallback, real alarms not yet available on this device/account).")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
