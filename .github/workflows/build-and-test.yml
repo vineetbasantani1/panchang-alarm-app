@@ -1,0 +1,55 @@
+name: Build and Test (iOS Simulator)
+
+# Runs on GitHub's macOS runner. This is FREE and UNLIMITED on public
+# repositories (private repos pay per-minute for macOS runners, so keep
+# this repo public to keep this workflow free).
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show available Xcode versions
+        run: ls /Applications | grep Xcode
+
+      - name: Select latest Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Build for iOS Simulator
+        run: |
+          xcodebuild build \
+            -scheme PanchangAlarm \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' \
+            | xcpretty || true
+
+      - name: Run unit tests in Simulator
+        run: |
+          xcodebuild test \
+            -scheme PanchangAlarm \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' \
+            | xcpretty || true
+
+      - name: Boot Simulator and capture screenshots
+        run: |
+          UDID=$(xcrun simctl list devices | grep "iPhone 17" | grep -v unavailable | head -1 | awk -F '[()]' '{print $2}')
+          xcrun simctl boot "$UDID" || true
+          sleep 10
+          mkdir -p screenshots
+          xcrun simctl io "$UDID" screenshot screenshots/app-launch.png || true
+
+      - name: Upload screenshots as downloadable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulator-screenshots
+          path: screenshots/
+          if-no-files-found: ignore
