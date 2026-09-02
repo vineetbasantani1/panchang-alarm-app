@@ -1,0 +1,61 @@
+name: Build Full App (via XcodeGen)
+
+# Runs on GitHub's macOS runner. FREE and UNLIMITED on public repositories.
+# Uses XcodeGen (https://github.com/yonaskolb/XcodeGen) to generate a real
+# .xcodeproj from project.yml, without needing Xcode's GUI project wizard.
+# This builds the ACTUAL APP (AppSources/, including the AlarmKit code),
+# not just the core library — giving free compiler feedback on the parts
+# that couldn't be verified without a Mac.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+
+jobs:
+  build-app:
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project from project.yml
+        run: xcodegen generate
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: List available Simulators
+        run: xcrun simctl list devices available
+
+      - name: Build the full app for iOS Simulator
+        run: |
+          xcodebuild build \
+            -project PanchangAlarm.xcodeproj \
+            -scheme PanchangAlarm \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' \
+            -allowProvisioningUpdates \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Boot Simulator and capture a screenshot
+        if: success()
+        run: |
+          UDID=$(xcrun simctl list devices | grep "iPhone 17" | grep -v unavailable | head -1 | awk -F '[()]' '{print $2}')
+          xcrun simctl boot "$UDID" || true
+          sleep 5
+          xcrun simctl install "$UDID" "$(find ~/Library/Developer/Xcode/DerivedData -name 'PanchangAlarm.app' -path '*iphonesimulator*' | head -1)" || true
+          xcrun simctl launch "$UDID" com.vineetbasantani.panchangalarm || true
+          sleep 5
+          mkdir -p screenshots
+          xcrun simctl io "$UDID" screenshot screenshots/app-launch.png || true
+
+      - name: Upload screenshot artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-screenshot
+          path: screenshots/
+          if-no-files-found: ignore
