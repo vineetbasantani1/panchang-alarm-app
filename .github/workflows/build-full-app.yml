@@ -1,0 +1,75 @@
+name: Build Full App (via XcodeGen)
+
+# Runs on GitHub's macOS runner. FREE and UNLIMITED on public repositories.
+# Uses XcodeGen (https://github.com/yonaskolb/XcodeGen) to generate a real
+# .xcodeproj from project.yml, without needing Xcode's GUI project wizard.
+# This builds the ACTUAL APP (AppSources/, including the AlarmKit code),
+# not just the core library — giving free compiler feedback on the parts
+# that couldn't be verified without a Mac.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+
+jobs:
+  build-app:
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project from project.yml
+        run: xcodegen generate
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: List available Simulators
+        run: xcrun simctl list devices available
+
+      - name: Build the full app for iOS Simulator
+        run: |
+          xcodebuild build \
+            -project PanchangAlarm.xcodeproj \
+            -scheme PanchangAlarm \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' \
+            -allowProvisioningUpdates \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Run UI tests (real taps through the app, driven by CI)
+        run: |
+          xcodebuild test \
+            -project PanchangAlarm.xcodeproj \
+            -scheme PanchangAlarm \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' \
+            -allowProvisioningUpdates \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Extract screenshots from test results
+        if: always()
+        run: |
+          mkdir -p screenshots
+          xcrun xcresulttool export attachments \
+            --path TestResults.xcresult \
+            --output-path screenshots || echo "Attachment export not supported on this Xcode version; screenshots may not be extracted, but the .xcresult bundle itself is still uploaded below."
+
+      - name: Upload full test result bundle (viewable in Xcode)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-xcresult
+          path: TestResults.xcresult
+          if-no-files-found: ignore
+
+      - name: Upload extracted screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-screenshots
+          path: screenshots/
+          if-no-files-found: ignore
