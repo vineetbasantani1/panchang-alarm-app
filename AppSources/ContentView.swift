@@ -54,6 +54,7 @@ struct ContentView: View {
                                 .foregroundStyle(.secondary)
                                 .accessibilityIdentifier("locationSummaryText")
                         }
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityIdentifier("locationRow")
@@ -73,6 +74,7 @@ struct ContentView: View {
                                 .foregroundStyle(.secondary)
                                 .accessibilityIdentifier("tithiSummaryText")
                         }
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityIdentifier("tithiRow")
