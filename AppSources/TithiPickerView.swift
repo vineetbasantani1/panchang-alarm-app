@@ -25,6 +25,7 @@ struct TithiPickerView: View {
                                     .accessibilityIdentifier("preset_\(preset.title)_checked")
                             }
                         }
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityIdentifier("preset_\(preset.title)")
@@ -44,6 +45,7 @@ struct TithiPickerView: View {
                                     .foregroundStyle(.orange)
                             }
                         }
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
