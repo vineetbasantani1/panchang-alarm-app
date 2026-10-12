@@ -1,4 +1,8 @@
+![Panchang Alarm](assets/banner.png)
+
 # Panchang Alarm
+
+![platform: iOS 26+](https://img.shields.io/badge/platform-iOS_26%2B-B3141B?style=flat-square&labelColor=1B1F23) ![built with: Swift and SwiftUI](https://img.shields.io/badge/built_with-Swift_and_SwiftUI-B3141B?style=flat-square&labelColor=1B1F23) ![alarms: AlarmKit](https://img.shields.io/badge/alarms-AlarmKit-B3141B?style=flat-square&labelColor=1B1F23)
 
 Lets you pick any combination of Hindu lunar tithis (Ekadashi, Purnima,
 Sankashti Chaturthi, or any of the full 30) and any location, then rings a
